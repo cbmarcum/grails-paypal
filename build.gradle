@@ -17,8 +17,10 @@ plugins {
     id "com.jfrog.bintray" version "1.1"
 }
 
-version "3.3.0"
-group "org.grails.plugins"
+version "3.3.1"
+// group "org.grails.plugins"
+group "net.codebuilders"
+// mainClassName = 'grails.paypal.Application'
 
 apply plugin: 'maven-publish'
 apply plugin: 'eclipse'
@@ -29,10 +31,16 @@ apply plugin: "org.grails.grails-gsp"
 // Used for publishing to central repository, remove if not needed
 // apply from:'https://raw.githubusercontent.com/grails/grails-profile-repository/master/profiles/plugin/templates/grailsCentralPublishing.gradle'
 // apply from:'https://raw.githubusercontent.com/grails/grails-profile-repository/master/profiles/plugin/templates/bintrayPublishing.gradle'
+// extra
+// apply plugin: "application"
+apply plugin: 'maven'
+apply plugin: 'signing'
 
 ext {
     grailsVersion = project.grailsVersion
     gradleWrapperVersion = project.gradleWrapperVersion
+    // isReleaseVersion = !version.endsWith("SNAPSHOT") // used to not pgp sign snapshots
+    isReleaseVersion = false  // until we fix signing
 }
 
 sourceCompatibility = 1.8
@@ -76,7 +84,7 @@ dependencies {
     provided "org.grails:grails-plugin-domain-class"
     runtime "com.bertramlabs.plugins:asset-pipeline-grails:2.14.2"
     testCompile "org.grails:grails-gorm-testing-support"
-    testCompile "org.grails:grails-plugin-testing"
+    // testCompile "org.grails:grails-plugin-testing"
     testCompile "org.grails.plugins:geb"
     testCompile "org.grails:grails-web-testing-support"
     testRuntime "org.seleniumhq.selenium:selenium-htmlunit-driver:2.47.1"
@@ -85,4 +93,117 @@ dependencies {
 
 task wrapper(type: Wrapper) {
     gradleVersion = gradleWrapperVersion
+}
+
+groovydoc {
+    docTitle = "Grails Paypal Plugin"
+    header = "Code Builders, LLC" // doesn't seem to work
+    footer = "Generated documentation ${version}"
+    windowTitle = docTitle
+    use = true // create class and package usage pages
+}
+
+archivesBaseName = 'grails-paypal'
+
+signing {
+    // only pgp sign if not a snapshot and we are uploading to maven repo
+    // required { isReleaseVersion && gradle.taskGraph.hasTask("uploadArchives") }
+    required { isReleaseVersion }
+    sign configurations.archives
+}
+
+uploadArchives.repositories.mavenDeployer {
+    // pgp sign the pom file also
+    // beforeDeployment { MavenDeployment deployment -> signing.signPom(deployment) }
+
+    configuration = configurations.archives
+
+
+    // examples:
+    // url: "file://localhost/tmp/myRepo/"
+    // url: "https://repository.apache.org/service/local/staging/deploy/maven2/" // Apache Nexus
+    // url: "http://oss.sonatype.org/service/local/staging/deploy/maven2/"
+    // url: "file://$buildDir/myRepo/" // local build directory
+    repository(url: "file://$buildDir/myRepo/") {
+        // (userName: mavenUser, password: mavenPassword)
+    }
+
+    // pom.project
+    pom.project {
+        name 'Grails Paypal Plugin'
+        packaging 'jar'
+        description 'A Grails 3.3 plugin for E-Commerce'
+        url 'http://codebuilders.net'
+        inceptionYear '2016'
+
+        scm {
+            url 'https://github.com/cbmarcum/grails-paypal'
+            developerConnection 'https://github.com/cbmarcum/grails-paypal'
+            connection 'https://github.com/cbmarcum/grails-paypal'
+        }
+
+        licenses {
+            license {
+                name 'The Apache Software License, Version 2.0'
+                url 'http://www.apache.org/licenses/LICENSE-2.0.txt'
+                distribution 'repo'
+            }
+        }
+
+        developers {
+            developer {
+                name 'Graeme Rocher'
+            }
+            developer {
+                name 'Matt Stine'
+            }
+            developer {
+                name 'Matthias Bohlen'
+            }
+            developer {
+                name 'Carl Marcum'
+                email 'carl.marcum@codebuilders.net'
+                url 'http://codebuilders.net'
+                // see: http://www.mail-archive.com/user@gradle.codehaus.org/msg05368.html
+                // organization 'Code Builders, LLC'
+                organization = 'Code Builders, LLC' // <-- note we use assignment here
+                organizationUrl 'http://codebuilders.net'
+
+            }
+        }
+    }
+
+}
+
+groovydoc.mustRunAfter clean
+jar.mustRunAfter groovydoc
+
+groovydoc.dependsOn clean
+jar.dependsOn groovydoc
+
+// custom tasks for creating source/javadoc jars
+task mySourcesJar(type: Jar, dependsOn: classes) {
+    classifier = 'sources'
+    from sourceSets.main.allSource
+}
+/*
+task myCopyResources(type: Copy, dependsOn: groovydoc) {
+    into groovydoc.destinationDir
+    from sourceSets.main.resources
+}
+
+task myGroovydocJar(type: Jar, dependsOn: myCopyResources) {
+    classifier = 'javadoc'
+    from groovydoc.destinationDir
+}
+*/
+task myGroovydocJar(type: Jar, dependsOn: groovydoc) {
+    classifier = 'javadoc'
+    from groovydoc.destinationDir
+}
+
+// add groovydoc/source jar tasks as artifacts
+artifacts {
+    archives mySourcesJar
+    archives myGroovydocJar
 }
