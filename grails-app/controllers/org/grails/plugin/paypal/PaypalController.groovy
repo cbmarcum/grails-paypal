@@ -1,15 +1,18 @@
 package org.grails.plugin.paypal
 
 import grails.core.GrailsApplication
+import grails.gorm.transactions.Transactional
 
+@Transactional(readOnly = true)
 class PaypalController {
 
     GrailsApplication grailsApplication
 
     static allowedMethods = [buy: 'POST', notifyPaypal: 'POST']
 
-    def notifyPaypal = {
-        log.debug "Received IPN notification from PayPal Server ${params}"
+    @Transactional
+    def notifyPaypal() {
+        log.info "Received IPN notification from PayPal Server ${params}"
         def config = grailsApplication.config.grails.paypal
         def server = config.server
         def login = params.email ?: config.email
@@ -18,7 +21,7 @@ class PaypalController {
         params.cmd = "_notify-validate"
         def queryString = params.toQueryString()[1..-1]
 
-        log.debug "Sending back query $queryString to PayPal server $server"
+        log.info "Sending back query $queryString to PayPal server $server"
         def url = new URL(server)
         def conn = url.openConnection()
         conn.doOutput = true
@@ -28,7 +31,7 @@ class PaypalController {
 
         def result = conn.inputStream.text?.trim()
 
-        log.debug "Got response from PayPal IPN $result"
+        log.info "Got response from PayPal IPN $result"
 
         def payment = Payment.findByTransactionId(params.transactionId)
 
@@ -67,7 +70,7 @@ REQUEST INFO: ${params}
                 payment.save(flush: true)
             }
         } else {
-            log.debug "Error with PayPal IPN response: [$result] and Payment: [${payment?.transactionId}]"
+            log.info "Error with PayPal IPN response: [$result] and Payment: [${payment?.transactionId}]"
         }
         render "OK" // Paypal needs a response, otherwise it will send the notification several times!
     }
@@ -91,12 +94,13 @@ REQUEST INFO: ${params}
         }
     }
 
-    def success = {
+    @Transactional
+    def success() {
         def payment = Payment.findByTransactionId(params.transactionId)
-        log.debug "Success notification received from PayPal for $payment with transaction id ${params.transactionId}"
+        log.info "Success notification received from PayPal for $payment with transaction id ${params.transactionId}"
 
         // DEBUG
-        params.each { k, v -> println "$k - $v" }
+        params.each { k, v -> log.info "$k - $v" }
 
         if (payment) {
             request.payment = payment
@@ -135,10 +139,10 @@ REQUEST INFO: ${params}
             response.sendError 403
         }
     }
-
-    def cancel = {
+    @Transactional
+    def cancel() {
         def payment = Payment.findByTransactionId(params.transactionId)
-        log.debug "Cancel notification received from PayPal for $payment with transaction id ${params.transactionId}"
+        log.info "Cancel notification received from PayPal for $payment with transaction id ${params.transactionId}"
         if (payment) {
             request.payment = payment
             if (payment.status != Payment.COMPLETE) {
@@ -162,7 +166,8 @@ REQUEST INFO: ${params}
 
     }
 
-    def buy = {
+    @Transactional
+    def buy() {
         def payment
         if (params.transactionId) {
             payment = Payment.findByTransactionId(params.transactionId)
@@ -171,7 +176,7 @@ REQUEST INFO: ${params}
             payment.addToPaymentItems(new PaymentItem(params))
         }
 
-        if (payment?.id) log.debug "Resuming existing transaction $payment"
+        if (payment?.id) log.info "Resuming existing transaction $payment"
         if (payment?.validate()) {
             request.payment = payment
             payment.save(flush: true, failOnError: true)
@@ -216,7 +221,7 @@ REQUEST INFO: ${params}
             url << "return=${successURL}&"
             url << "cancel_return=${cancelURL}"
 
-            log.debug "Redirection to PayPal with URL: $url"
+            log.info "Redirection to PayPal with URL: $url"
 
             redirect(url: url)
         } else {
@@ -225,11 +230,13 @@ REQUEST INFO: ${params}
         }
     }
 
-    def uploadCart = { ShippingAddressCommand address ->
+    @Transactional
+    def uploadCart() {
+        ShippingAddressCommand address
         //Assumes the Payment has been pre-populated and saved by whatever cart mechanism
         //you are using...
         def payment = Payment.findByTransactionId(params.transactionId)
-        log.debug "Uploading cart: $payment"
+        log.info "Uploading cart: $payment"
         def config = grailsApplication.config.grails.paypal
         def server = config.server
         def login = params.email ?: config.email
@@ -294,7 +301,7 @@ REQUEST INFO: ${params}
         url << "cancel_return=${cancelURL}&"
         url << "rm=2"
 
-        log.debug "Redirection to PayPal with URL: $url"
+        log.info "Redirection to PayPal with URL: $url"
 
         redirect(url: url)
     }
