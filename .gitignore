@@ -1,9 +1,16 @@
-# JetBrains IntelliJ IDEA files
-.idea/
-*.iml
-*.iws
+# Grails 4
+Thumbs.db
+.DS_Store
 .gradle
 build/
+out/
+.idea
+*.iml
+*.ipr
+*.iws
+.project
+.settings
+.classpath
 
 # Log files
 *.log
@@ -16,17 +23,10 @@ target/
 target-eclipse/
 target/*
 
-.DS_Store
-
 docs/
 plugin.xml
 pom.xml
 .settings
 
 # Unused grails files
-.classpath
-.project
 test/reports
-
-web-app
-
