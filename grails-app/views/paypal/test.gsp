@@ -1,4 +1,5 @@
-<%@ page import="org.grails.plugin.paypal.PaymentItem; org.grails.plugin.paypal.Payment" %>
+<%@  page import="org.grails.plugin.paypal.PaymentItem; org.grails.plugin.paypal.Payment"  %>
+<!DOCTYPE html>
 <html>
 	<head>
 		<meta http-equiv="Content-type" content="text/html; charset=utf-8">
