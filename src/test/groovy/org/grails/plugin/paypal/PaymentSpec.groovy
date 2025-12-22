@@ -1,7 +1,7 @@
 package org.grails.plugin.paypal
 
-import spock.lang.Specification
 import grails.testing.gorm.DomainUnitTest
+import spock.lang.Specification
 
 class PaymentSpec extends Specification implements DomainUnitTest<Payment> {
 

@@ -1,32 +1,45 @@
-# Grails 4
-Thumbs.db
-.DS_Store
+### Gradle ###
 .gradle
 build/
-out/
-.idea
-*.iml
-*.ipr
-*.iws
+!gradle/wrapper/gradle-wrapper.jar
+!**/src/main/**/build/
+!**/src/test/**/build/
+!**/src/integration-test/**/build/
+
+### STS ###
+.apt_generated
+.classpath
+.factorypath
 .project
 .settings
-.classpath
+.springBeans
+.sts4-cache
+bin/
+!**/src/main/**/bin/
+!**/src/test/**/bin/
+!**/src/integration-test/**/bin/
 
-# Log files
-*.log
+### IntelliJ IDEA ###
+.idea
+*.iws
+*.iml
+*.ipr
+out/
+!**/src/main/**/out/
+!**/src/test/**/out/
+!**/src/integration-test/**/out/
 
-# Libraries and others
-*.zip
+### NetBeans ###
+/nbproject/private/
+/nbbuild/
+/dist/
+/nbdist/
+/.nb-gradle/
 
-# Target
+### VS Code ###
+.vscode/
+
+### Other ###
+Thumbs.db
+.DS_Store
 target/
-target-eclipse/
-target/*
-
-docs/
-plugin.xml
-pom.xml
-.settings
-
-# Unused grails files
-test/reports

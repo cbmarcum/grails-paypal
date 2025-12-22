@@ -1,11 +1,11 @@
 package org.grails.plugin.paypal
 
-import spock.lang.Specification
 import grails.testing.gorm.DomainUnitTest
 import grails.testing.web.controllers.ControllerUnitTest
+import grails.validation.ValidationException
+import spock.lang.*
 
-class PaymentControllerSpec extends Specification implements ControllerUnitTest<PaymentController>,
-        DomainUnitTest<Payment> {
+class PaymentControllerSpec extends Specification implements ControllerUnitTest<PaymentController>, DomainUnitTest<Payment> {
 
     def populateValidParams(params) {
         assert params != null
@@ -16,137 +16,212 @@ class PaymentControllerSpec extends Specification implements ControllerUnitTest<
     }
 
     void "Test the index action returns the correct model"() {
+        given:
+        controller.paymentService = Mock(PaymentService) {
+            1 * list(_) >> []
+            1 * count() >> 0
+        }
 
-        when: "The index action is executed"
+        when:"The index action is executed"
         controller.index()
 
-        then: "The model is correct"
+        then:"The model is correct"
         !model.paymentList
         model.paymentCount == 0
     }
 
     void "Test the create action returns the correct model"() {
-        when: "The create action is executed"
+        when:"The create action is executed"
         controller.create()
 
-        then: "The model is correctly created"
-        model.payment != null
+        then:"The model is correctly created"
+        model.payment!= null
     }
 
-    void "Test the save action correctly persists an instance"() {
+    void "Test the save action with a null instance"() {
+        when:"Save is called for a domain instance that doesn't exist"
+        request.contentType = FORM_CONTENT_TYPE
+        request.method = 'POST'
+        controller.save(null)
 
-        when: "The save action is executed with an invalid instance"
+        then:"A 404 error is returned"
+        response.redirectedUrl == '/payment/index'
+        flash.message != null
+    }
+
+    void "Test the save action correctly persists"() {
+        given:
+        controller.paymentService = Mock(PaymentService) {
+            1 * save(_ as Payment)
+        }
+
+        when:"The save action is executed with a valid instance"
+        response.reset()
+        request.contentType = FORM_CONTENT_TYPE
+        request.method = 'POST'
+        populateValidParams(params)
+        def payment = new Payment(params)
+        payment.id = 1
+
+        controller.save(payment)
+
+        then:"A redirect is issued to the show action"
+        response.redirectedUrl == '/payment/show/1'
+        controller.flash.message != null
+    }
+
+    void "Test the save action with an invalid instance"() {
+        given:
+        controller.paymentService = Mock(PaymentService) {
+            1 * save(_ as Payment) >> { Payment payment ->
+                throw new ValidationException("Invalid instance", payment.errors)
+            }
+        }
+
+        when:"The save action is executed with an invalid instance"
         request.contentType = FORM_CONTENT_TYPE
         request.method = 'POST'
         def payment = new Payment()
-        payment.validate()
         controller.save(payment)
 
-        then: "The create view is rendered again with the correct model"
+        then:"The create view is rendered again with the correct model"
         model.payment != null
         view == 'create'
-
-        when: "The save action is executed with a valid instance"
-        response.reset()
-        populateValidParams(params)
-        payment = new Payment(params)
-
-        controller.save(payment)
-
-        then: "A redirect is issued to the show action"
-        response.redirectedUrl == '/payment/show/1'
-        controller.flash.message != null
-        Payment.count() == 1
     }
 
-    void "Test that the show action returns the correct model"() {
-        when: "The show action is executed with a null domain"
+    void "Test the show action with a null id"() {
+        given:
+        controller.paymentService = Mock(PaymentService) {
+            1 * get(null) >> null
+        }
+
+        when:"The show action is executed with a null domain"
         controller.show(null)
 
-        then: "A 404 error is returned"
+        then:"A 404 error is returned"
         response.status == 404
-
-        when: "A domain instance is passed to the show action"
-        populateValidParams(params)
-        def payment = new Payment(params)
-        controller.show(payment)
-
-        then: "A model is populated containing the domain instance"
-        model.payment == payment
     }
 
-    void "Test that the edit action returns the correct model"() {
-        when: "The edit action is executed with a null domain"
+    void "Test the show action with a valid id"() {
+        given:
+        controller.paymentService = Mock(PaymentService) {
+            1 * get(2) >> new Payment()
+        }
+
+        when:"A domain instance is passed to the show action"
+        controller.show(2)
+
+        then:"A model is populated containing the domain instance"
+        model.payment instanceof Payment
+    }
+
+    void "Test the edit action with a null id"() {
+        given:
+        controller.paymentService = Mock(PaymentService) {
+            1 * get(null) >> null
+        }
+
+        when:"The show action is executed with a null domain"
         controller.edit(null)
 
-        then: "A 404 error is returned"
+        then:"A 404 error is returned"
         response.status == 404
-
-        when: "A domain instance is passed to the edit action"
-        populateValidParams(params)
-        def payment = new Payment(params)
-        controller.edit(payment)
-
-        then: "A model is populated containing the domain instance"
-        model.payment == payment
     }
 
-    void "Test the update action performs an update on a valid domain instance"() {
-        when: "Update is called for a domain instance that doesn't exist"
+    void "Test the edit action with a valid id"() {
+        given:
+        controller.paymentService = Mock(PaymentService) {
+            1 * get(2) >> new Payment()
+        }
+
+        when:"A domain instance is passed to the show action"
+        controller.edit(2)
+
+        then:"A model is populated containing the domain instance"
+        model.payment instanceof Payment
+    }
+
+
+    void "Test the update action with a null instance"() {
+        when:"Save is called for a domain instance that doesn't exist"
         request.contentType = FORM_CONTENT_TYPE
         request.method = 'PUT'
         controller.update(null)
 
-        then: "A 404 error is returned"
+        then:"A 404 error is returned"
         response.redirectedUrl == '/payment/index'
-        flash.message != null
-
-        when: "An invalid domain instance is passed to the update action"
-        response.reset()
-        def payment = new Payment()
-        payment.validate()
-        controller.update(payment)
-
-        then: "The edit view is rendered again with the invalid instance"
-        view == 'edit'
-        model.payment == payment
-
-        when: "A valid domain instance is passed to the update action"
-        response.reset()
-        populateValidParams(params)
-        payment = new Payment(params).save(flush: true)
-        controller.update(payment)
-
-        then: "A redirect is issued to the show action"
-        payment != null
-        response.redirectedUrl == "/payment/show/$payment.id"
         flash.message != null
     }
 
-    void "Test that the delete action deletes an instance if it exists"() {
-        when: "The delete action is called for a null instance"
+    void "Test the update action correctly persists"() {
+        given:
+        controller.paymentService = Mock(PaymentService) {
+            1 * save(_ as Payment)
+        }
+
+        when:"The save action is executed with a valid instance"
+        response.reset()
+        request.contentType = FORM_CONTENT_TYPE
+        request.method = 'PUT'
+        populateValidParams(params)
+        def payment = new Payment(params)
+        payment.id = 1
+
+        controller.update(payment)
+
+        then:"A redirect is issued to the show action"
+        response.redirectedUrl == '/payment/show/1'
+        controller.flash.message != null
+    }
+
+    void "Test the update action with an invalid instance"() {
+        given:
+        controller.paymentService = Mock(PaymentService) {
+            1 * save(_ as Payment) >> { Payment payment ->
+                throw new ValidationException("Invalid instance", payment.errors)
+            }
+        }
+
+        when:"The save action is executed with an invalid instance"
+        request.contentType = FORM_CONTENT_TYPE
+        request.method = 'PUT'
+        controller.update(new Payment())
+
+        then:"The edit view is rendered again with the correct model"
+        model.payment != null
+        view == 'edit'
+    }
+
+    void "Test the delete action with a null instance"() {
+        when:"The delete action is called for a null instance"
         request.contentType = FORM_CONTENT_TYPE
         request.method = 'DELETE'
         controller.delete(null)
 
-        then: "A 404 is returned"
+        then:"A 404 is returned"
         response.redirectedUrl == '/payment/index'
         flash.message != null
+    }
 
-        when: "A domain instance is created"
-        response.reset()
-        populateValidParams(params)
-        def payment = new Payment(params).save(flush: true)
+    void "Test the delete action with an instance"() {
+        given:
+        controller.paymentService = Mock(PaymentService) {
+            1 * delete(2)
+        }
 
-        then: "It exists"
-        Payment.count() == 1
+        when:"The domain instance is passed to the delete action"
+        request.contentType = FORM_CONTENT_TYPE
+        request.method = 'DELETE'
+        controller.delete(2)
 
-        when: "The domain instance is passed to the delete action"
-        controller.delete(payment)
-
-        then: "The instance is deleted"
-        Payment.count() == 0
+        then:"The user is redirected to index"
         response.redirectedUrl == '/payment/index'
         flash.message != null
     }
 }
+
+
+
+
+
+

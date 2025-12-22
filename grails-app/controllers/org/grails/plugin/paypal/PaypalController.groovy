@@ -7,6 +7,7 @@ import grails.gorm.transactions.Transactional
 class PaypalController {
 
     GrailsApplication grailsApplication
+    PaymentService paymentService
 
     static allowedMethods = [buy: 'POST', notifyPaypal: 'POST']
 
@@ -33,7 +34,7 @@ class PaypalController {
 
         log.info "Got response from PayPal IPN $result"
 
-        def payment = Payment.findByTransactionId(params.transactionId)
+        def payment = paymentService.findByTransactionId(params.transactionId)
 
         if (payment && result == 'VERIFIED') {
             if (params.receiver_email != login) {
@@ -48,26 +49,16 @@ REQUEST INFO: ${params}
                         log.warn """WARNING: Request tried to re-use and old PayPal transaction id. This request is possibly fraudulent!
 		REQUEST INFO: ${params} """
                     } else if (status == 'Completed') {
-                        payment.paypalTransactionId = params.txn_id
-                        payment.status = Payment.COMPLETE
-                        updateBuyerInformation(payment, params)
-                        updateTotal(payment, params)
+                        paymentService.updatePaymentFromPaypal(payment, params, Payment.COMPLETE)
                         log.info "Verified payment ${payment} as COMPLETE"
                     } else if (status == 'Pending') {
-                        payment.paypalTransactionId = params.txn_id
-                        payment.status = Payment.PENDING
-                        updateBuyerInformation(payment, params)
-                        updateTotal(payment, params)
+                        paymentService.updatePaymentFromPaypal(payment, params, Payment.PENDING)
                         log.info "Verified payment ${payment} as PENDING"
                     } else if (status == 'Failed') {
-                        payment.paypalTransactionId = params.txn_id
-                        payment.status = Payment.FAILED
-                        updateBuyerInformation(payment, params)
-                        updateTotal(payment, params)
+                        paymentService.updatePaymentFromPaypal(payment, params, Payment.FAILED)
                         log.info "Verified payment ${payment} as FAILED"
                     }
                 }
-                payment.save(flush: true)
             }
         } else {
             log.info "Error with PayPal IPN response: [$result] and Payment: [${payment?.transactionId}]"
@@ -75,28 +66,9 @@ REQUEST INFO: ${params}
         render "OK" // Paypal needs a response, otherwise it will send the notification several times!
     }
 
-    void updateBuyerInformation(payment, params) {
-        BuyerInformation buyerInfo = payment.buyerInformation ?: new BuyerInformation()
-        buyerInfo.populateFromPaypal(params)
-        payment.buyerInformation = buyerInfo
-    }
-
-    // only works with our modified payment - cbm
-    void updateTotal(payment, params) {
-        if (params?.mc_shipping) {
-            payment.shipping = new BigDecimal(params?.mc_shipping)
-        }
-        if (params.containsKey("tax")) {
-            payment.tax = Double.valueOf(params?.tax)
-        }
-        if (params.containsKey("mc_gross")) {
-            payment.gross = new BigDecimal(params?.mc_gross)
-        }
-    }
-
     @Transactional
     def success() {
-        def payment = Payment.findByTransactionId(params.transactionId)
+        def payment = paymentService.findByTransactionId(params.transactionId)
         log.info "Success notification received from PayPal for $payment with transaction id ${params.transactionId}"
 
         // DEBUG
@@ -105,25 +77,8 @@ REQUEST INFO: ${params}
         if (payment) {
             request.payment = payment
             if (payment.status != Payment.COMPLETE) {
-                payment.status = Payment.COMPLETE
-
-                // TEST FOR BUYER and PAYPAL trans - cbm
-                payment.paypalTransactionId = params.txn_id
-                updateBuyerInformation(payment, params)
+                paymentService.updatePaymentFromPaypal(payment, params, Payment.COMPLETE)
                 log.info "Updated payment ${payment} with buyer and paypalTransactionId"
-
-                // only works with our modified payment
-                if (params.mc_shipping) {
-                payment.shipping = new BigDecimal(params?.mc_shipping)
-                }
-                if (params.tax) {
-                    payment.tax = Double.valueOf(params?.tax)
-                }
-                payment.gross = new BigDecimal(params?.mc_gross)
-
-                updateTotal(payment, params)
-
-                payment.save(flush: true)
             }
 
             if (params.returnAction || params.returnController) {
@@ -139,15 +94,15 @@ REQUEST INFO: ${params}
             response.sendError 403
         }
     }
+
     @Transactional
     def cancel() {
-        def payment = Payment.findByTransactionId(params.transactionId)
+        def payment = paymentService.findByTransactionId(params.transactionId)
         log.info "Cancel notification received from PayPal for $payment with transaction id ${params.transactionId}"
         if (payment) {
             request.payment = payment
             if (payment.status != Payment.COMPLETE) {
-                payment.status = Payment.CANCELLED
-                payment.save(flush: true)
+                paymentService.cancelPayment(payment)
                 if (params.cancelAction || params.cancelController) {
                     def args = [:]
                     if (params.cancelAction) args.action = params.cancelAction
@@ -170,16 +125,14 @@ REQUEST INFO: ${params}
     def buy() {
         def payment
         if (params.transactionId) {
-            payment = Payment.findByTransactionId(params.transactionId)
+            payment = paymentService.findByTransactionId(params.transactionId)
         } else {
-            payment = new Payment(params)
-            payment.addToPaymentItems(new PaymentItem(params))
+            payment = paymentService.createPayment(params)
         }
 
         if (payment?.id) log.info "Resuming existing transaction $payment"
         if (payment?.validate()) {
             request.payment = payment
-            payment.save(flush: true, failOnError: true)
             def config = grailsApplication.config.grails.paypal
             def server = config.server
             def baseUrl = params.baseUrl
@@ -235,7 +188,7 @@ REQUEST INFO: ${params}
         ShippingAddressCommand address
         //Assumes the Payment has been pre-populated and saved by whatever cart mechanism
         //you are using...
-        def payment = Payment.findByTransactionId(params.transactionId)
+        def payment = paymentService.findByTransactionId(params.transactionId)
         log.info "Uploading cart: $payment"
         def config = grailsApplication.config.grails.paypal
         def server = config.server

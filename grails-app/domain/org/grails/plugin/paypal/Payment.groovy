@@ -1,6 +1,7 @@
 package org.grails.plugin.paypal
 
 class Payment implements Serializable {
+
     static final PENDING = 'PENDING'
     static final INVALID = 'INVALID'
     static final FAILED = 'FAILED'
@@ -39,4 +40,5 @@ class Payment implements Serializable {
 
     @Override
     String toString() { "Payment: ${transactionId ?: 'not saved'}" }
+
 }

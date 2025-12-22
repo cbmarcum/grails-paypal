@@ -1,21 +1,20 @@
 package org.grails.plugin.paypal
 
-import grails.plugins.Plugin
+import grails.plugins.*
 
-class PaypalGrailsPlugin extends Plugin {
+class GrailsPaypalGrailsPlugin extends Plugin {
 
     // the version or versions of Grails the plugin is designed for
-    def grailsVersion = "3.1.0 > *"
-
+    def grailsVersion = "7.0.4  > *"
+    // resources that are excluded from plugin packaging
     def pluginExcludes = [
-            "grails-app/views/paypal/test.gsp",
             "grails-app/views/error.gsp"
     ]
 
-    def author = "Matthias Bohlen, (originally by Graeme Rocher, followed by Matt Stine)"
-    def authorEmail = "mbohlen@mbohlen.de, matt@mattstine.com, mansi.arora@tothenew.com"
-
-    def title = "Provides integration with Paypal's Instant Payment Notfication (IPN) system"
+    // TODO Fill in these fields
+    def title = "Grails Paypal" // Headline display name of the plugin
+    def author = "Carl Marcum, (originally by Graeme Rocher, followed by Matt Stine and Matthias Bohlen)"
+    def authorEmail = "carl.marcum@codebuilders.net"
     def description = '''\
 This plug-in allows Grails applications to integrate with Paypal and its Instant Payment Notification (IPN) system.
 
@@ -28,26 +27,27 @@ In order for this plug-in to function you must configure the following settings 
 * grails.paypal.server - The URL of the paypal server
 * grails.paypal.email - The email of the merchant account
 * grails.serverURL - The server URL for production
-'''
+   '''
     def profiles = ['web']
-    def documentation = "http://grails.org/plugin/paypal"
+    // URL to the plugin's documentation
+    def documentation = "https://github.com/cbmarcum/grails-paypal/"
 
     // Extra (optional) plugin metadata
 
     // License: one of 'APACHE', 'GPL2', 'GPL3'
-//    def license = "APACHE"
+    def license = "APACHE"
 
     // Details of company behind the plugin (if there is one)
-//    def organization = [ name: "My Company", url: "http://www.my-company.com/" ]
+    //    def organization = [ name: "My Company", url: "https://www.my-company.com/" ]
 
     // Any additional developers beyond the author specified above.
-//    def developers = [ [ name: "Joe Bloggs", email: "joe@bloggs.net" ]]
+    //    def developers = [ [ name: "Joe Bloggs", email: "joe@bloggs.net" ]]
 
     // Location of the plugin's issue tracker.
-//    def issueManagement = [ system: "JIRA", url: "http://jira.grails.org/browse/GPMYPLUGIN" ]
+    //    def issueManagement = [ system: "GitHub", url: "https://github.com/apache/GrailsPaypal/issues" ]
 
     // Online location of the plugin's browseable source code.
-//    def scm = [ url: "http://svn.codehaus.org/grails-plugins/" ]
+    //    def scm = [ url: "https://github.com/apache/GrailsPaypal" ]
 
     Closure doWithSpring() {
         { ->
@@ -78,4 +78,3 @@ In order for this plug-in to function you must configure the following settings 
         // TODO Implement code that is executed when the application shuts down (optional)
     }
 }
-
