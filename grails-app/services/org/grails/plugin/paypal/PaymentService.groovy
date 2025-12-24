@@ -32,7 +32,7 @@ class PaymentService {
     Payment createPayment(Map params) {
         def payment = new Payment(params)
         payment.addToPaymentItems(new PaymentItem(params))
-        payment.save(flush: true, failOnError: true)
+        // payment.save(flush: true, failOnError: true) // saved in PaypalController buy (after validate)
         return payment
     }
 
