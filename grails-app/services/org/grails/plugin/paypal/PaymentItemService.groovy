@@ -1,18 +1,34 @@
 package org.grails.plugin.paypal
 
-import grails.gorm.services.Service
+import grails.gorm.transactions.Transactional
 
-@Service(PaymentItem)
-interface PaymentItemService {
+@Transactional
+class PaymentItemService {
 
-    PaymentItem get(Serializable id)
+    PaymentItem get(Serializable id) {
+        PaymentItem.get(id)
+    }
 
-    List<PaymentItem> list(Map args)
+    List<PaymentItem> list(Map args) {
+        PaymentItem.list(args)
+    }
 
-    Long count()
+    Long count() {
+        PaymentItem.count()
+    }
 
-    void delete(Serializable id)
+    void delete(Serializable id) {
+        PaymentItem paymentItem = PaymentItem.get(id)
+        if (paymentItem) {
+            if (paymentItem.payment) {
+                paymentItem.payment.removeFromPaymentItems(paymentItem)
+            }
+            paymentItem.delete()
+        }
+    }
 
-    PaymentItem save(PaymentItem paymentItem)
+    PaymentItem save(PaymentItem paymentItem) {
+        paymentItem.save()
+    }
 
 }
