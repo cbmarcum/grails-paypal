@@ -10,9 +10,14 @@ class PaymentControllerSpec extends Specification implements ControllerUnitTest<
     def populateValidParams(params) {
         assert params != null
 
-        // TODO: Populate valid properties like...
-        //params["name"] = 'someValidName'
-        assert false, "TODO: Provide a populateValidParams() implementation for this generated test suite"
+        params["status"] = Payment.PENDING
+        params["tax"] = 0.0
+        params["discountCartAmount"] = 0
+        params["currency"] = Currency.getInstance("USD")
+        params["buyerId"] = 1L
+        params["shipping"] = 0.0
+        params["gross"] = 0.0
+        params["transactionIdPrefix"] = "TRANS"
     }
 
     void "Test the index action returns the correct model"() {

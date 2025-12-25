@@ -10,9 +10,20 @@ class BuyerInformationControllerSpec extends Specification implements Controller
     def populateValidParams(params) {
         assert params != null
 
-        // TODO: Populate valid properties like...
-        //params["name"] = 'someValidName'
-        assert false, "TODO: Provide a populateValidParams() implementation for this generated test suite"
+        params["uniqueCustomerId"] = 'CUST123456'
+        params["firstName"] = 'John'
+        params["lastName"] = 'Doe'
+        params["companyName"] = 'Acme Corp'
+        params["receiverName"] = 'Jane Doe'
+        params["email"] = 'john.doe@example.com'
+        params["street"] = '123 Main Street'
+        params["zip"] = '12345'
+        params["city"] = 'Springfield'
+        params["state"] = 'CA'
+        params["country"] = 'United States'
+        params["countryCode"] = 'US'
+        params["phoneNumber"] = '555-1234'
+        params["addressConfirmed"] = true
     }
 
     void "Test the index action returns the correct model"() {
