@@ -13,14 +13,12 @@ class BuyerInformationServiceSpec extends Specification {
     SessionFactory sessionFactory
 
     private Long setupData() {
-        // TODO: Populate valid domain instances and return a valid ID
-        //new BuyerInformation(...).save(flush: true, failOnError: true)
-        //new BuyerInformation(...).save(flush: true, failOnError: true)
-        //BuyerInformation buyerInformation = new BuyerInformation(...).save(flush: true, failOnError: true)
-        //new BuyerInformation(...).save(flush: true, failOnError: true)
-        //new BuyerInformation(...).save(flush: true, failOnError: true)
-        assert false, "TODO: Provide a setupData() implementation for this generated test suite"
-        //buyerInformation.id
+        new BuyerInformation(firstName: 'John', lastName: 'Doe', email: 'john@example.com').save(flush: true, failOnError: true)
+        new BuyerInformation(firstName: 'Jane', lastName: 'Smith', email: 'jane@example.com').save(flush: true, failOnError: true)
+        BuyerInformation buyerInformation = new BuyerInformation(firstName: 'Bob', lastName: 'Johnson', email: 'bob@example.com').save(flush: true, failOnError: true)
+        new BuyerInformation(firstName: 'Alice', lastName: 'Williams', email: 'alice@example.com').save(flush: true, failOnError: true)
+        new BuyerInformation(firstName: 'Charlie', lastName: 'Brown', email: 'charlie@example.com').save(flush: true, failOnError: true)
+        buyerInformation.id
     }
 
     void "test get"() {
@@ -38,7 +36,8 @@ class BuyerInformationServiceSpec extends Specification {
 
         then:
         buyerInformationList.size() == 2
-        assert false, "TODO: Verify the correct instances are returned"
+        buyerInformationList[0].email == "bob@example.com"
+        buyerInformationList[1].email == "alice@example.com"
     }
 
     void "test count"() {
@@ -64,8 +63,7 @@ class BuyerInformationServiceSpec extends Specification {
 
     void "test save"() {
         when:
-        assert false, "TODO: Provide a valid instance to save"
-        BuyerInformation buyerInformation = new BuyerInformation()
+        BuyerInformation buyerInformation = new BuyerInformation(firstName: 'Bob', lastName: 'Johnson', email: 'bob@example.com')
         buyerInformationService.save(buyerInformation)
 
         then:

@@ -13,21 +13,19 @@ class PaymentServiceSpec extends Specification {
     SessionFactory sessionFactory
 
     private Long setupData() {
-        // TODO: Populate valid domain instances and return a valid ID
-        //new Payment(...).save(flush: true, failOnError: true)
-        //new Payment(...).save(flush: true, failOnError: true)
-        //Payment payment = new Payment(...).save(flush: true, failOnError: true)
-        //new Payment(...).save(flush: true, failOnError: true)
-        //new Payment(...).save(flush: true, failOnError: true)
-        assert false, "TODO: Provide a setupData() implementation for this generated test suite"
-        //payment.id
+        new Payment(status: Payment.PENDING, buyerId: 1L).save(flush: true, failOnError: true)
+        new Payment(status: Payment.COMPLETE, buyerId: 2L).save(flush: true, failOnError: true)
+        Payment payment = new Payment(status: Payment.PENDING, buyerId: 3L).save(flush: true, failOnError: true)
+        new Payment(status: Payment.CANCELLED, buyerId: 4L).save(flush: true, failOnError: true)
+        new Payment(status: Payment.FAILED, buyerId: 5L).save(flush: true, failOnError: true)
+        payment.id
     }
 
     void "test get"() {
-        setupData()
+        def paymentId = setupData()
 
         expect:
-        paymentService.get(1) != null
+        paymentService.get(paymentId) != null
     }
 
     void "test list"() {
@@ -38,7 +36,8 @@ class PaymentServiceSpec extends Specification {
 
         then:
         paymentList.size() == 2
-        assert false, "TODO: Verify the correct instances are returned"
+        paymentList[0].buyerId == 3
+        paymentList[1].buyerId == 4
     }
 
     void "test count"() {
@@ -64,8 +63,7 @@ class PaymentServiceSpec extends Specification {
 
     void "test save"() {
         when:
-        assert false, "TODO: Provide a valid instance to save"
-        Payment payment = new Payment()
+        Payment payment =  new Payment(status: Payment.PENDING, buyerId: 3L)
         paymentService.save(payment)
 
         then:
