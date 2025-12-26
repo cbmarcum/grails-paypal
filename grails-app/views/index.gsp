@@ -76,6 +76,14 @@
                     </g:each>
                 </ul>
             </div>
+            <div id="test" role="navigation">
+                <h2>Paypal Test</h2>
+                <ul>
+                    <li class="controller">
+                        <a href="/paypal/test">Paypal Button Test Page</a>
+                    </li>
+                </ul>
+            </div>
         </section>
     </div>
 </div>
