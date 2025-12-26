@@ -1,0 +1,230 @@
+package org.grails.plugin.paypal
+
+import grails.testing.gorm.DomainUnitTest
+import grails.testing.web.controllers.ControllerUnitTest
+import grails.validation.ValidationException
+import spock.lang.*
+
+class PaymentItemControllerSpec extends Specification implements ControllerUnitTest<PaymentItemController>, DomainUnitTest<PaymentItem> {
+
+    def populateValidParams(params) {
+        assert params != null
+
+        params["amount"] = 10.00
+        params["discountAmount"] = 0
+        params["weight"] = 0.0
+        params["itemName"] = "Test Item"
+        params["itemNumber"] = "ITEM-001"
+        params["quantity"] = 1
+    }
+
+    void "Test the index action returns the correct model"() {
+        given:
+        controller.paymentItemService = Mock(PaymentItemService) {
+            1 * list(_) >> []
+            1 * count() >> 0
+        }
+
+        when:"The index action is executed"
+        controller.index()
+
+        then:"The model is correct"
+        !model.paymentItemList
+        model.paymentItemCount == 0
+    }
+
+    void "Test the create action returns the correct model"() {
+        when:"The create action is executed"
+        controller.create()
+
+        then:"The model is correctly created"
+        model.paymentItem!= null
+    }
+
+    void "Test the save action with a null instance"() {
+        when:"Save is called for a domain instance that doesn't exist"
+        request.contentType = FORM_CONTENT_TYPE
+        request.method = 'POST'
+        controller.save(null)
+
+        then:"A 404 error is returned"
+        response.redirectedUrl == '/paymentItem/index'
+        flash.message != null
+    }
+
+    void "Test the save action correctly persists"() {
+        given:
+        controller.paymentItemService = Mock(PaymentItemService) {
+            1 * save(_ as PaymentItem)
+        }
+
+        when:"The save action is executed with a valid instance"
+        response.reset()
+        request.contentType = FORM_CONTENT_TYPE
+        request.method = 'POST'
+        populateValidParams(params)
+        def paymentItem = new PaymentItem(params)
+        paymentItem.id = 1
+
+        controller.save(paymentItem)
+
+        then:"A redirect is issued to the show action"
+        response.redirectedUrl == '/paymentItem/show/1'
+        controller.flash.message != null
+    }
+
+    void "Test the save action with an invalid instance"() {
+        given:
+        controller.paymentItemService = Mock(PaymentItemService) {
+            1 * save(_ as PaymentItem) >> { PaymentItem paymentItem ->
+                throw new ValidationException("Invalid instance", paymentItem.errors)
+            }
+        }
+
+        when:"The save action is executed with an invalid instance"
+        request.contentType = FORM_CONTENT_TYPE
+        request.method = 'POST'
+        def paymentItem = new PaymentItem()
+        controller.save(paymentItem)
+
+        then:"The create view is rendered again with the correct model"
+        model.paymentItem != null
+        view == 'create'
+    }
+
+    void "Test the show action with a null id"() {
+        given:
+        controller.paymentItemService = Mock(PaymentItemService) {
+            1 * get(null) >> null
+        }
+
+        when:"The show action is executed with a null domain"
+        controller.show(null)
+
+        then:"A 404 error is returned"
+        response.status == 404
+    }
+
+    void "Test the show action with a valid id"() {
+        given:
+        controller.paymentItemService = Mock(PaymentItemService) {
+            1 * get(2) >> new PaymentItem()
+        }
+
+        when:"A domain instance is passed to the show action"
+        controller.show(2)
+
+        then:"A model is populated containing the domain instance"
+        model.paymentItem instanceof PaymentItem
+    }
+
+    void "Test the edit action with a null id"() {
+        given:
+        controller.paymentItemService = Mock(PaymentItemService) {
+            1 * get(null) >> null
+        }
+
+        when:"The show action is executed with a null domain"
+        controller.edit(null)
+
+        then:"A 404 error is returned"
+        response.status == 404
+    }
+
+    void "Test the edit action with a valid id"() {
+        given:
+        controller.paymentItemService = Mock(PaymentItemService) {
+            1 * get(2) >> new PaymentItem()
+        }
+
+        when:"A domain instance is passed to the show action"
+        controller.edit(2)
+
+        then:"A model is populated containing the domain instance"
+        model.paymentItem instanceof PaymentItem
+    }
+
+
+    void "Test the update action with a null instance"() {
+        when:"Save is called for a domain instance that doesn't exist"
+        request.contentType = FORM_CONTENT_TYPE
+        request.method = 'PUT'
+        controller.update(null)
+
+        then:"A 404 error is returned"
+        response.redirectedUrl == '/paymentItem/index'
+        flash.message != null
+    }
+
+    void "Test the update action correctly persists"() {
+        given:
+        controller.paymentItemService = Mock(PaymentItemService) {
+            1 * save(_ as PaymentItem)
+        }
+
+        when:"The save action is executed with a valid instance"
+        response.reset()
+        request.contentType = FORM_CONTENT_TYPE
+        request.method = 'PUT'
+        populateValidParams(params)
+        def paymentItem = new PaymentItem(params)
+        paymentItem.id = 1
+
+        controller.update(paymentItem)
+
+        then:"A redirect is issued to the show action"
+        response.redirectedUrl == '/paymentItem/show/1'
+        controller.flash.message != null
+    }
+
+    void "Test the update action with an invalid instance"() {
+        given:
+        controller.paymentItemService = Mock(PaymentItemService) {
+            1 * save(_ as PaymentItem) >> { PaymentItem paymentItem ->
+                throw new ValidationException("Invalid instance", paymentItem.errors)
+            }
+        }
+
+        when:"The save action is executed with an invalid instance"
+        request.contentType = FORM_CONTENT_TYPE
+        request.method = 'PUT'
+        controller.update(new PaymentItem())
+
+        then:"The edit view is rendered again with the correct model"
+        model.paymentItem != null
+        view == 'edit'
+    }
+
+    void "Test the delete action with a null instance"() {
+        when:"The delete action is called for a null instance"
+        request.contentType = FORM_CONTENT_TYPE
+        request.method = 'DELETE'
+        controller.delete(null)
+
+        then:"A 404 is returned"
+        response.redirectedUrl == '/paymentItem/index'
+        flash.message != null
+    }
+
+    void "Test the delete action with an instance"() {
+        given:
+        controller.paymentItemService = Mock(PaymentItemService) {
+            1 * delete(2)
+        }
+
+        when:"The domain instance is passed to the delete action"
+        request.contentType = FORM_CONTENT_TYPE
+        request.method = 'DELETE'
+        controller.delete(2)
+
+        then:"The user is redirected to index"
+        response.redirectedUrl == '/paymentItem/index'
+        flash.message != null
+    }
+}
+
+
+
+
+
+

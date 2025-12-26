@@ -1,9 +1,11 @@
 <html>
 	<head>
-		<meta http-equiv="Content-type" content="text/html; charset=utf-8">
+        <meta name="layout" content="main" />
 		<title>Transaction Complete</title>
 	</head>
-	<body id="body">
+	<body>
+    <div id="content" role="main">
+        <div class="container">
 		Your purchase is complete. Information for your reference can be seen below:
 		<div id="transactionSummary" class="transactionSummary">
 			<div class="transSummaryItem">
@@ -12,5 +14,7 @@
 			</div>
 			<g:render template="txsummary" model="[payment:payment]" plugin="paypal" />
 		</div>
+        </div>
+    </div>
 	</body>
 </html>

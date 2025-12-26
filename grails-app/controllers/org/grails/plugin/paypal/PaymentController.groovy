@@ -1,41 +1,39 @@
 package org.grails.plugin.paypal
 
+import grails.validation.ValidationException
 import static org.springframework.http.HttpStatus.*
-import grails.gorm.transactions.Transactional
 
-@Transactional(readOnly = true)
 class PaymentController {
+
+    PaymentService paymentService
 
     static allowedMethods = [save: "POST", update: "PUT", delete: "DELETE"]
 
     def index(Integer max) {
         params.max = Math.min(max ?: 10, 100)
-        respond Payment.list(params), model:[paymentCount: Payment.count()]
+        respond paymentService.list(params), model:[paymentCount: paymentService.count()]
     }
 
-    def show(Payment payment) {
-        respond payment
+    def show(Long id) {
+        respond paymentService.get(id)
     }
 
     def create() {
         respond new Payment(params)
     }
 
-    @Transactional
     def save(Payment payment) {
         if (payment == null) {
-            transactionStatus.setRollbackOnly()
             notFound()
             return
         }
 
-        if (payment.hasErrors()) {
-            transactionStatus.setRollbackOnly()
+        try {
+            paymentService.save(payment)
+        } catch (ValidationException e) {
             respond payment.errors, view:'create'
             return
         }
-
-        payment.save flush:true
 
         request.withFormat {
             form multipartForm {
@@ -46,25 +44,22 @@ class PaymentController {
         }
     }
 
-    def edit(Payment payment) {
-        respond payment
+    def edit(Long id) {
+        respond paymentService.get(id)
     }
 
-    @Transactional
     def update(Payment payment) {
         if (payment == null) {
-            transactionStatus.setRollbackOnly()
             notFound()
             return
         }
 
-        if (payment.hasErrors()) {
-            transactionStatus.setRollbackOnly()
+        try {
+            paymentService.save(payment)
+        } catch (ValidationException e) {
             respond payment.errors, view:'edit'
             return
         }
-
-        payment.save flush:true
 
         request.withFormat {
             form multipartForm {
@@ -75,20 +70,17 @@ class PaymentController {
         }
     }
 
-    @Transactional
-    def delete(Payment payment) {
-
-        if (payment == null) {
-            transactionStatus.setRollbackOnly()
+    def delete(Long id) {
+        if (id == null) {
             notFound()
             return
         }
 
-        payment.delete flush:true
+        paymentService.delete(id)
 
         request.withFormat {
             form multipartForm {
-                flash.message = message(code: 'default.deleted.message', args: [message(code: 'payment.label', default: 'Payment'), payment.id])
+                flash.message = message(code: 'default.deleted.message', args: [message(code: 'payment.label', default: 'Payment'), id])
                 redirect action:"index", method:"GET"
             }
             '*'{ render status: NO_CONTENT }

@@ -2,15 +2,18 @@
 <!DOCTYPE html>
 <html>
 	<head>
-		<meta http-equiv="Content-type" content="text/html; charset=utf-8">
+        <meta name="layout" content="main" />
 		<title>Paypal Test</title>
 	</head>
 
-	<body id="body">
+	<body>
+    <div id="content" role="main">
+        <div class="container">
         Buy Now: item, no discount.. 
 		<paypal:button itemName="iPod Nano"
 		               itemNumber="IPD32048039"
 		               amount="99.00"
+                       discountAmount="0.00"
 		               buyerId="10"
 		/>
 
@@ -24,20 +27,24 @@
 
         Cart upload..
         <%
-            if (Payment.count() == 0) {
-                payment = new Payment(buyerId:10)
-                payment.addToPaymentItems(
-                    new PaymentItem(
-                        amount: 99,
-                        discountAmount: 9,
-                        itemName: "iPod Nano", 
-                        itemNumber: "IPD32048039"
+            Payment.withTransaction { status ->
+                if (Payment.count() == 0) {
+                    payment = new Payment(buyerId: 10)
+                    payment.addToPaymentItems(
+                            new PaymentItem(
+                                    amount: 99,
+                                    discountAmount: 9,
+                                    itemName: "iPod Nano",
+                                    itemNumber: "IPD32048039"
+                            )
                     )
-                )
-                payment.save(flush:true)
+                    payment.save(flush:true)
+                }
+
+                else {
+                    payment = Payment.list()[0]
+                }
             }
-            else
-                payment = org.grails.'plugin.paypal'.Payment.list()[0]
         %>
 
         <g:form
@@ -49,5 +56,7 @@
                 src="https://www.paypalobjects.com/WEBSCR-640-20110306-1/en_US/i/btn/btn_xpressCheckout.gif"
                 alt="Click to pay via PayPal - the safer, easier way to pay"/>
         </g:form>
+        </div>
+    </div>
 	</body>
 </html>
