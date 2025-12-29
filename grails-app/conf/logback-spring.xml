@@ -20,7 +20,7 @@
     <springProfile name="development">
         <logger name="StackTrace" level="ERROR" />
 
-<!--        <logger name="org.grails.plugin" level="DEBUG"/>-->
+        <logger name="org.grails.plugin" level="DEBUG"/>
 
 <!--        <logger name="org.hibernate.SQL" level="DEBUG"/>-->
 <!--        <logger name="org.hibernate.type.descriptor.sql.BasicBinder" level="TRACE"/>-->
