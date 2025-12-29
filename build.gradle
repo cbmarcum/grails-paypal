@@ -1,3 +1,18 @@
+/* build with:
+* make sure to use java 21 and groovy 4.0
+*
+* ./gradlew publishMyLibraryPublicationToMyRepository
+*
+* * publish manually at:
+* https://central.sonatype.com/publishing
+* or to publish locally
+* ./gradlew publishToMavenLocal
+*
+* to update this wrapper version
+* $ gradle wrapper --gradle-version 8.5 --distribution-type all
+*
+*/
+
 buildscript {
     repositories {
         mavenCentral()
@@ -17,6 +32,8 @@ plugins {
     id "war"
     id "idea"
     id "eclipse"
+    id 'maven-publish'
+    id 'signing'
 }
 
 // Not Published to Gradle Plugin Portal
@@ -24,7 +41,10 @@ apply plugin: "org.apache.grails.gradle.grails-gsp"
 apply plugin: "cloud.wondrify.asset-pipeline"
 apply plugin: "org.apache.grails.gradle.grails-plugin"
 
-group = "org.grails.plugin"
+version = "7.0.1-SNAPSHOT"
+group = "net.codebuilders"
+// archivesBaseName = "grails-paypal" // not needed
+description = "A Grails plugin to integrate with Paypal and its Instant Payment Notification (IPN) system."
 
 repositories {
     mavenCentral()
@@ -71,6 +91,19 @@ dependencies {
 
 compileJava.options.release = 17
 
+groovydoc {
+    docTitle = "Grails Paypal"
+    header = "Code Builders, LLC" // doesn't seem to work
+    footer = "Generated documentation ${version}"
+    windowTitle = docTitle
+    use = true // create class and package usage pages
+}
+
+java {
+    withJavadocJar()
+    withSourcesJar()
+}
+
 tasks.withType(Test).configureEach {
     outputs.upToDateWhen { false } // always run tests
     useJUnitPlatform()
@@ -92,3 +125,68 @@ assets {
     ]
 }
 
+// publishing and signing
+// guide: https://docs.gradle.org/current/userguide/publishing_setup.html
+
+publishing {
+    publications {
+        myLibrary(MavenPublication) {
+            artifactId = 'grails-paypal'
+            from components.java
+
+            versionMapping {
+                usage('java-api') {
+                    fromResolutionOf('runtimeClasspath')
+                }
+                usage('java-runtime') {
+                    fromResolutionResult()
+                }
+            }
+
+            pom {
+                name = 'Grails Paypal Plugin'
+                packaging = 'jar'
+                description = 'A plugin for using Paypal IPN with Grails.'
+                url = 'http://codebuilders.net'
+                inceptionYear = '2025'
+
+                scm {
+                    url = 'https://github.com/cbmarcum/grails-paypal'
+                    developerConnection = 'https://github.com/cbmarcum/grails-paypal'
+                    connection = 'https://github.com/cbmarcum/grails-paypal'
+                }
+
+                licenses {
+                    license {
+                        name = 'The Apache Software License, Version 2.0'
+                        url = 'https://www.apache.org/licenses/LICENSE-2.0.txt'
+                        distribution = 'repo'
+                    }
+                }
+
+                developers {
+                    developer {
+                        name = 'Carl Marcum'
+                        email = 'carl.marcum@codebuilders.net'
+                        url = 'https://codebuilders.net'
+                        organization = 'Code Builders, LLC'
+                        organizationUrl = 'https://codebuilders.net'
+
+                    }
+                }
+            }
+        }
+    }
+
+    repositories {
+        maven {
+            name = 'myRepo'
+            url = layout.buildDirectory.dir("repo")
+        }
+    }
+
+}
+
+signing {
+    sign publishing.publications.myLibrary
+}
