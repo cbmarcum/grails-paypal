@@ -11,7 +11,6 @@ class GrailsPaypalGrailsPlugin extends Plugin {
             "grails-app/views/error.gsp"
     ]
 
-    // TODO Fill in these fields
     def title = "Grails Paypal" // Headline display name of the plugin
     def author = "Carl Marcum, (originally by Graeme Rocher, followed by Matt Stine and Matthias Bohlen)"
     def authorEmail = "carl.marcum@codebuilders.net"
@@ -44,10 +43,10 @@ In order for this plug-in to function you must configure the following settings 
     //    def developers = [ [ name: "Joe Bloggs", email: "joe@bloggs.net" ]]
 
     // Location of the plugin's issue tracker.
-    //    def issueManagement = [ system: "GitHub", url: "https://github.com/apache/GrailsPaypal/issues" ]
+    def issueManagement = [ system: "GitHub", url: "https://github.com/cbmarcum/grails-paypal/issues" ]
 
     // Online location of the plugin's browseable source code.
-    //    def scm = [ url: "https://github.com/apache/GrailsPaypal" ]
+    def scm = [ url: "https://github.com/cbmarcum/grails-paypal/" ]
 
     Closure doWithSpring() {
         { ->
