@@ -25,34 +25,50 @@ When used in a multi-project build:
 ```groovy
  grails {
      plugins {
-         compile project(':grails-paypal')
+         implementation project(':grails-paypal')
      }
  }
 ```
 
 When used as a normal dependency in the dependencies block:
 ```groovy
-compile "net.codebuilders:grails-paypal"
+implementation "net.codebuilders:grails-paypal"
 ```
 
 ## Usage
 
-To get started you need to configure PayPal server and merchant email address in application.groovy as well as the grails server URL used for absolute links. For example:
+To get started you need to configure PayPal server and merchant email address in `conf/application.groovy` as well as the grails server URL used for absolute links. For example:
 
 ```groovy
-environments { 
-   production {
-      grails.paypal.server = "https://ipnpb.paypal.com/cgi-bin/webscr"
-      grails.paypal.email = "example@business.com"
-      grails.serverURL = "http://www.grails.org"	  // Beware this is an application-wide setting	
-   }
-   development {
-      grails.paypal.server = "https://ipnpb.sandbox.paypal.com/cgi-bin/webscr"
-      grails.paypal.email = "testpp_1211202427_biz@g2one.com"
-      grails.serverURL = "http://812.99.101.131"				
-   }
+environments {
+    development {
+        grails.paypal.server = "https://ipnpb.sandbox.paypal.com/cgi-bin/webscr"
+        grails.paypal.email = "testpp_1211202427_biz@g2one.com"
+        grails.serverURL = "http://localhost:8080"				
+    }
+    production {
+        grails.paypal.server = "https://ipnpb.paypal.com/cgi-bin/webscr"
+        grails.paypal.email = "example@business.com"
+        grails.serverURL = "http://www.grails.org"	  // Beware this is an application-wide setting	
+    }
  }
  ```
+You can also use the new YAML syntax in `conf/application.yml`:
+```yaml
+environments:
+  development:
+    grails:
+      serverURL: http://localhost:8080
+      paypal:
+        server: https://ipnpb.sandbox.paypal.com/cgi-bin/webscr
+        email: seller_1237686842_biz@mattstine.com
+  production:
+    grails:
+      serverURL: http://www.grails.org
+      paypal:
+        server: https://ipnpb.paypal.com/cgi-bin/webscr
+        email: example@business.com
+```
 
 With this done the next thing to do is to create a PayPal button. For example:
 ```gsp
